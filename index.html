@@ -51,6 +51,7 @@
             justify-content: space-between;
             margin-bottom: 6px;
             width: 100%;
+            position: relative;
         }
         
         .player-title {
@@ -65,6 +66,21 @@
             height: 24px;
             width: auto;
             object-fit: contain;
+        }
+        
+        .live-logo {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 30px;
+            width: auto;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .live-logo.visible {
+            opacity: 1;
         }
         
         .current-channel-title {
@@ -164,8 +180,9 @@
         }
         
         .channels-title {
-            font-size: 1.1rem;
-            color: #ffd166;
+            height: 24px;
+            width: auto;
+            object-fit: contain;
         }
         
         .channels-count {
@@ -230,6 +247,137 @@
             width: 100%;
         }
         
+        .add-channel-btn {
+            background: rgba(42, 140, 133, 0.7);
+            border-radius: 6px;
+            padding: 8px 4px;
+            transition: all 0.3s ease;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            height: 70px;
+            width: 100%;
+        }
+        
+        .add-channel-btn:hover {
+            background: rgba(42, 140, 133, 0.9);
+            transform: translateY(-1px);
+        }
+        
+        .add-icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            color: #ffd166;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: rgba(30, 30, 45, 0.95);
+            border-radius: 8px;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            color: #ffd166;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: #f0f0f0;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #d0d0d0;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(50, 50, 65, 0.9);
+            font-size: 0.9rem;
+            color: #f0f0f0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #d4b15c;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-cancel {
+            background: rgba(197, 92, 92, 0.7);
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: rgba(197, 92, 92, 0.9);
+        }
+        
+        .btn-add {
+            background: rgba(42, 140, 133, 0.7);
+            color: white;
+        }
+        
+        .btn-add:hover {
+            background: rgba(42, 140, 133, 0.9);
+        }
+        
         .toast {
             position: fixed;
             top: 10px;
@@ -265,7 +413,7 @@
                 grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             }
             
-            .channel-btn {
+            .channel-btn, .add-channel-btn {
                 height: 65px;
                 padding: 6px 3px;
             }
@@ -275,6 +423,14 @@
             }
             
             .logo {
+                height: 20px;
+            }
+            
+            .live-logo {
+                height: 25px;
+            }
+            
+            .channels-title {
                 height: 20px;
             }
             
@@ -302,7 +458,7 @@
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
                 gap: 8px;
             }
-            .channel-btn {
+            .channel-btn, .add-channel-btn {
                 min-height: 75px;
                 padding: 8px 4px;
             }
@@ -329,6 +485,7 @@
                     <img src="https://raw.githubusercontent.com/retegramnews24/GTVmobile/main/Logo_GTVvv.png" alt="GTV Logo" class="logo">
                     Mobile
                 </div>
+                <img src="https://raw.githubusercontent.com/retegramnews24/GTVmobile/main/Logo_Live_Giallo.png" alt="Live" class="live-logo" id="liveLogo">
                 <div class="current-channel-title" id="currentChannelTitle">Seleziona un canale</div>
             </div>
             <div class="video-container">
@@ -340,7 +497,7 @@
         
         <div class="channels-section">
             <div class="channels-header">
-                <div class="channels-title"><i class="fas fa-list"></i> Canali TV</div>
+                <img src="https://raw.githubusercontent.com/retegramnews24/GTVmobile/main/Logo_800A_Giallo.png" alt="Canali TV" class="channels-title">
                 <div class="channels-count" id="channelsCount">62</div>
             </div>
             
@@ -350,12 +507,34 @@
         </div>
     </div>
 
+    <!-- Modal per aggiungere canali -->
+    <div class="modal" id="addChannelModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Aggiungi Canale Personalizzato</h3>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="channelName" class="form-label">Nome del Canale</label>
+                <input type="text" id="channelName" class="form-input" placeholder="Inserisci il nome del canale">
+            </div>
+            <div class="form-group">
+                <label for="channelUrl" class="form-label">URL del Canale</label>
+                <input type="text" id="channelUrl" class="form-input" placeholder="Inserisci l'URL del canale (m3u8)">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelAdd">Annulla</button>
+                <button class="btn btn-add" id="confirmAdd">Aggiungi</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toastContainer"></div>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         // Lista completa dei canali
-        const channels = [
+        let channels = [
             { url: "https://dash2.antik.sk/live/test_rai_uno_tizen/playlist.m3u8", name: "Rai 1" },
             { url: "https://viamotionhsi.netplus.ch/live/eds/rai2/browser-HLS8/rai2.m3u8", name: "Rai 2 HD" },
             { url: "https://dash2.antik.sk/live/test_rai_tre_tizen/playlist.m3u8", name: "Rai 3" },
@@ -426,12 +605,35 @@
         const videoPlayer = document.getElementById('videoPlayer');
         const currentChannelTitle = document.getElementById('currentChannelTitle');
         const toastContainer = document.getElementById('toastContainer');
+        const liveLogo = document.getElementById('liveLogo');
+        const addChannelModal = document.getElementById('addChannelModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelAdd = document.getElementById('cancelAdd');
+        const confirmAdd = document.getElementById('confirmAdd');
+        const channelNameInput = document.getElementById('channelName');
+        const channelUrlInput = document.getElementById('channelUrl');
         
         // Variabili globali
         let hls = null;
         let player = null;
         let controlsTimeout = null;
         let isUserInteracting = false;
+        let isPlaying = false;
+
+        // Carica canali personalizzati dal localStorage
+        function loadCustomChannels() {
+            const customChannels = localStorage.getItem('gtv_custom_channels');
+            if (customChannels) {
+                const parsedChannels = JSON.parse(customChannels);
+                channels = [...channels, ...parsedChannels];
+            }
+        }
+
+        // Salva canali personalizzati nel localStorage
+        function saveCustomChannels() {
+            const customChannels = channels.filter(channel => channel.isCustom);
+            localStorage.setItem('gtv_custom_channels', JSON.stringify(customChannels));
+        }
 
         // Funzione per mostrare toast notifications
         function showToast(message, type = 'info') {
@@ -538,6 +740,8 @@
             stopButton.addEventListener('click', function() {
                 player.pause();
                 player.currentTime = 0;
+                isPlaying = false;
+                liveLogo.classList.remove('visible');
                 showToast('Riproduzione fermata', 'info');
             });
 
@@ -549,6 +753,19 @@
                     playButton.parentNode.insertBefore(stopButton, playButton.nextSibling);
                 }
             }
+
+            // Gestione eventi play/pause per il logo LIVE
+            player.on('play', function() {
+                isPlaying = true;
+                if (currentChannelTitle.textContent !== 'Seleziona un canale') {
+                    liveLogo.classList.add('visible');
+                }
+            });
+
+            player.on('pause', function() {
+                isPlaying = false;
+                liveLogo.classList.remove('visible');
+            });
 
             // Gestione PIP
             if (document.pictureInPictureEnabled) {
@@ -635,11 +852,15 @@
                     hls.on(Hls.Events.MANIFEST_PARSED, function() {
                         videoPlayer.play();
                         showControls();
+                        isPlaying = true;
+                        liveLogo.classList.add('visible');
                     });
                 } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
                     // Supporto nativo per HLS (Safari)
                     videoPlayer.play();
                     showControls();
+                    isPlaying = true;
+                    liveLogo.classList.add('visible');
                 } else {
                     showToast('Il browser non supporta la riproduzione di questo formato', 'error');
                 }
@@ -647,6 +868,8 @@
                 // Formati direttamente supportati (mp4, webm, etc.)
                 videoPlayer.play();
                 showControls();
+                isPlaying = true;
+                liveLogo.classList.add('visible');
             }
             
             // Riproduci il video con Plyr
@@ -655,10 +878,78 @@
             showToast(`Riproducendo: ${title}`, 'success');
         }
 
+        // Aggiungi canale personalizzato
+        function addCustomChannel() {
+            const name = channelNameInput.value.trim();
+            const url = channelUrlInput.value.trim();
+            
+            if (!name || !url) {
+                showToast('Inserisci sia il nome che l\'URL del canale', 'error');
+                return;
+            }
+            
+            // Verifica se l'URL è valido
+            try {
+                new URL(url);
+            } catch (e) {
+                showToast('URL non valido', 'error');
+                return;
+            }
+            
+            // Controlla se il canale esiste già
+            const exists = channels.some(channel => 
+                channel.name === name || channel.url === url
+            );
+            
+            if (exists) {
+                showToast('Questo canale è già presente nella lista', 'error');
+                return;
+            }
+            
+            // Aggiungi il canale
+            const newChannel = {
+                url: url,
+                name: name,
+                isCustom: true
+            };
+            
+            channels.push(newChannel);
+            saveCustomChannels();
+            displayChannels();
+            closeAddChannelModal();
+            
+            showToast(`Canale "${name}" aggiunto con successo!`, 'success');
+        }
+
+        // Apri modal per aggiungere canale
+        function openAddChannelModal() {
+            channelNameInput.value = '';
+            channelUrlInput.value = '';
+            addChannelModal.style.display = 'flex';
+        }
+
+        // Chiudi modal per aggiungere canale
+        function closeAddChannelModal() {
+            addChannelModal.style.display = 'none';
+        }
+
         // Inizializzazione
         document.addEventListener('DOMContentLoaded', function() {
             initializePlyr();
+            loadCustomChannels();
             displayChannels();
+            
+            // Gestori eventi per il modal
+            closeModal.addEventListener('click', closeAddChannelModal);
+            cancelAdd.addEventListener('click', closeAddChannelModal);
+            confirmAdd.addEventListener('click', addCustomChannel);
+            
+            // Chiudi modal cliccando fuori dal contenuto
+            addChannelModal.addEventListener('click', function(e) {
+                if (e.target === addChannelModal) {
+                    closeAddChannelModal();
+                }
+            });
         });
         
         // Mostra i canali come pulsanti
@@ -682,6 +973,17 @@
                 
                 channelsContainer.appendChild(channelBtn);
             });
+            
+            // Aggiungi il pulsante per aggiungere canali personalizzati
+            const addBtn = document.createElement('div');
+            addBtn.className = 'add-channel-btn';
+            addBtn.innerHTML = `
+                <i class="fas fa-plus add-icon"></i>
+                <div class="channel-name">Aggiungi Canale</div>
+            `;
+            
+            addBtn.addEventListener('click', openAddChannelModal);
+            channelsContainer.appendChild(addBtn);
         }
     </script>
 </body>
