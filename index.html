@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GTV Mobile</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Plyr CSS -->
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
@@ -82,7 +81,6 @@
             aspect-ratio: 16/9;
         }
         
-        /* Plyr customization */
         .plyr {
             border-radius: 6px;
             height: 100%;
@@ -112,7 +110,6 @@
             background: #237a74;
         }
         
-        /* Schermo intero personalizzato */
         .plyr--fullscreen-active {
             position: fixed !important;
             top: 0 !important;
@@ -138,10 +135,6 @@
             width: 100% !important;
             height: 100% !important;
             object-fit: contain;
-        }
-        
-        .plyr--fullscreen-active .plyr__poster {
-            background-size: contain;
         }
         
         .channels-section {
@@ -179,7 +172,7 @@
         
         .channels-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
             gap: 6px;
             width: 100%;
         }
@@ -187,7 +180,7 @@
         .channel-btn {
             background: rgba(35, 35, 50, 0.9);
             border-radius: 6px;
-            padding: 10px;
+            padding: 8px 4px;
             transition: all 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
@@ -197,6 +190,7 @@
             text-align: center;
             cursor: pointer;
             height: 70px;
+            width: 100%;
         }
         
         .channel-btn:hover {
@@ -217,12 +211,16 @@
         }
         
         .channel-name {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: bold;
             color: #f5f5f5;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.1;
+            max-height: 2.2em;
             width: 100%;
         }
         
@@ -247,7 +245,6 @@
         .toast.success { border-left-color: #2a8c85; }
         .toast.error { border-left-color: #c55c5c; }
         
-        /* Ottimizzazioni per mobile */
         @media (max-width: 768px) {
             body {
                 padding: 4px;
@@ -259,19 +256,18 @@
             }
             
             .channels-container {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             }
             
             .channel-btn {
-                height: 60px;
-                padding: 8px;
+                height: 65px;
+                padding: 6px 3px;
             }
             
             .channel-name {
-                font-size: 0.7rem;
+                font-size: 0.65rem;
             }
             
-            /* Schermo intero mobile */
             .plyr--fullscreen-active {
                 position: fixed !important;
                 top: 0 !important;
@@ -288,15 +284,15 @@
                 padding: 0 2px;
             }
             .channels-container { 
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
                 gap: 8px;
             }
             .channel-btn {
-                min-height: 80px;
-                padding: 12px;
+                min-height: 75px;
+                padding: 8px 4px;
             }
             .channel-name {
-                font-size: 0.8rem;
+                font-size: 0.7rem;
             }
         }
         
@@ -305,7 +301,7 @@
                 max-width: 98%;
             }
             .channels-container {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             }
         }
     </style>
@@ -317,7 +313,7 @@
                 <div class="player-title">
                     <i class="fas fa-tv"></i> GTV Mobile
                 </div>
-                <div class="current-channel-title" id="currentChannelTitle"></div>
+                <div class="current-channel-title" id="currentChannelTitle">Seleziona un canale</div>
             </div>
             <div class="video-container">
                 <video id="videoPlayer" playsinline controls>
@@ -329,7 +325,7 @@
         <div class="channels-section">
             <div class="channels-header">
                 <div class="channels-title"><i class="fas fa-list"></i> Canali TV</div>
-                <div class="channels-count" id="channelsCount">0</div>
+                <div class="channels-count" id="channelsCount">62</div>
             </div>
             
             <div class="channels-container" id="channelsContainer">
@@ -340,10 +336,9 @@
 
     <div id="toastContainer"></div>
 
-    <!-- Plyr JS -->
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        // Lista dei canali
+        // Lista completa dei canali
         const channels = [
             { url: "https://dash2.antik.sk/live/test_rai_uno_tizen/playlist.m3u8", name: "Rai 1" },
             { url: "https://viamotionhsi.netplus.ch/live/eds/rai2/browser-HLS8/rai2.m3u8", name: "Rai 2 HD" },
@@ -396,7 +391,17 @@
             { url: "https://amg01576-blueskyeenterta-lovepetsemea-samsungse-ctamh.amagi.tv/playlist/amg01576-blueskyeenterta-lovepetsemea-samsungse/playlist.m3u8", name: "Pets" },
             { url: "https://muzzik-live.morescreens.com/mts-8/playlist.m3u8", name: "Muzzik FLASHBACK" },
             { url: "https://muzzik-live.morescreens.com/mts-1/playlist.m3u8", name: "Muzzik Rock&Roll" },
-            { url: "https://streams2.sofast.tv/sofastplayout/b7867c83-0c17-4de2-a74b-beb972c4f342_1000015693_HLS/master.m3u8", name: "Mercury+" }
+            { url: "https://streams2.sofast.tv/sofastplayout/b7867c83-0c17-4de2-a74b-beb972c4f342_1000015693_HLS/master.m3u8", name: "Mercury+" },
+            { url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-Public/master.m3u8", name: "NASA TV" },
+            { url: "https://dwstream3-lh.akamaihd.net/i/dwstream3_live@124409/master.m3u8", name: "Deutsche Welle" },
+            { url: "https://f24hls-i.akamaihd.net/hls/live/221192/F24_EN_HI_HLS/master_2000.m3u8", name: "France 24" },
+            { url: "https://ambient-music.radioca.st/stream", name: "Ambient Music" },
+            { url: "https://ntv2.akamaized.net/hls/live/2013923/NASA-NTV2-Public/master.m3u8", name: "NASA Media" },
+            { url: "https://d3749synfikwkv.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-74ylxpgd78bpb/Live.m3u8", name: "LA7 Internazionale" },
+            { url: "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8", name: "DW Deutsch" },
+            { url: "https://skynewsau-live.akamaized.net/hls/live/2002689/skynewsau-extra1/master.m3u8", name: "Sky News" },
+            { url: "https://www.bloomberg.com/media-manifest/streams/us.m3u8", name: "Bloomberg" },
+            { url: "https://247wlive.foxweather.com/stream/index.m3u8", name: "Fox Weather" }
         ];
 
         // Elementi DOM
@@ -408,7 +413,7 @@
         
         // Variabili globali
         let hls = null;
-        let player = null; // Per l'istanza Plyr
+        let player = null;
         let controlsTimeout = null;
         let isUserInteracting = false;
 
@@ -473,12 +478,10 @@
             
             // Gestione schermo intero
             player.on('enterfullscreen', function() {
-                // Reset timer quando si entra in fullscreen
                 showControls();
             });
             
             player.on('exitfullscreen', function() {
-                // Reset timer quando si esce dal fullscreen
                 showControls();
             });
         }
@@ -487,18 +490,18 @@
         function initializePlyr() {
             player = new Plyr('#videoPlayer', {
                 controls: [
-                    'play-large', // Il pulsante play grande al centro
-                    'play', // Play/pause
-                    'progress', // Barra progresso
-                    'current-time', // Tempo corrente
-                    'duration', // Durata
-                    'mute', // Muto
-                    'volume', // Volume verticale
-                    'settings', // Impostazioni
-                    'pip', // Picture-in-picture
-                    'fullscreen', // Schermo intero
+                    'play-large',
+                    'play',
+                    'progress',
+                    'current-time',
+                    'duration',
+                    'mute',
+                    'volume',
+                    'settings',
+                    'pip',
+                    'fullscreen',
                 ],
-                hideControls: false, // Disabilitiamo il nascondimento automatico di Plyr
+                hideControls: false,
                 settings: ['quality', 'speed'],
                 storage: { enabled: false },
                 fullscreen: { 
@@ -525,26 +528,22 @@
             // Aggiungere il bottone ai controlli
             const controls = player.elements.controls;
             if (controls) {
-                // Inseriamo il bottone dopo il bottone play
                 const playButton = controls.querySelector('.plyr__control--play');
                 if (playButton) {
                     playButton.parentNode.insertBefore(stopButton, playButton.nextSibling);
                 }
             }
 
-            // Gestione PIP personalizzata per garantire il funzionamento
+            // Gestione PIP
             if (document.pictureInPictureEnabled) {
-                // Aggiungi gestore per il click sul bottone PIP
                 player.on('pip', function() {
                     togglePictureInPicture();
                 });
                 
-                // Gestisci quando la PIP viene chiusa dal browser
                 videoPlayer.addEventListener('leavepictureinpicture', function() {
                     player.elements.container.classList.remove('plyr--pip');
                 });
             } else {
-                // Nascondi il bottone PIP se non supportato
                 const pipButton = player.elements.controls.querySelector('[data-plyr="pip"]');
                 if (pipButton) {
                     pipButton.style.display = 'none';
@@ -619,19 +618,19 @@
                     hls.attachMedia(videoPlayer);
                     hls.on(Hls.Events.MANIFEST_PARSED, function() {
                         videoPlayer.play();
-                        showControls(); // Mostra i controlli quando il video inizia
+                        showControls();
                     });
                 } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
                     // Supporto nativo per HLS (Safari)
                     videoPlayer.play();
-                    showControls(); // Mostra i controlli quando il video inizia
+                    showControls();
                 } else {
                     showToast('Il browser non supporta la riproduzione di questo formato', 'error');
                 }
             } else {
                 // Formati direttamente supportati (mp4, webm, etc.)
                 videoPlayer.play();
-                showControls(); // Mostra i controlli quando il video inizia
+                showControls();
             }
             
             // Riproduci il video con Plyr
