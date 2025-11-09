@@ -1,1 +1,673 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GTV Mobile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Plyr CSS -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1f3d, #3d1a1a, #2a240f);
+            color: #f0f0f0;
+            min-height: 100vh;
+            padding: 4px;
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .player-section {
+            position: sticky;
+            top: 4px;
+            z-index: 100;
+            background: rgba(30, 30, 45, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 6px;
+            padding: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            width: 100%;
+        }
+        
+        .player-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            width: 100%;
+        }
+        
+        .player-title {
+            font-size: 1.1rem;
+            color: #ffd166;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .current-channel-title {
+            font-size: 1rem;
+            color: #ffd166;
+            text-align: right;
+            max-width: 60%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .video-container {
+            width: 100%;
+            background: #000;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 6px;
+            position: relative;
+            aspect-ratio: 16/9;
+        }
+        
+        /* Plyr customization */
+        .plyr {
+            border-radius: 6px;
+            height: 100%;
+            --plyr-control-icon-size: 16px;
+            --plyr-control-spacing: 8px;
+            --plyr-control-padding: 8px;
+            --plyr-control-radius: 4px;
+            --plyr-video-controls-background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            --plyr-video-control-color: white;
+        }
+        
+        .plyr__controls {
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        
+        .plyr__controls.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .plyr__control--overlaid {
+            background: #2a8c85;
+        }
+        
+        .plyr__control--overlaid:hover {
+            background: #237a74;
+        }
+        
+        /* Schermo intero personalizzato */
+        .plyr--fullscreen-active {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 10000;
+            border-radius: 0;
+            background: #000;
+        }
+        
+        .plyr--fullscreen-active .video-container {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 0;
+        }
+        
+        .plyr--fullscreen-active .plyr__video-wrapper {
+            height: 100% !important;
+        }
+        
+        .plyr--fullscreen-active video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+        }
+        
+        .plyr--fullscreen-active .plyr__poster {
+            background-size: contain;
+        }
+        
+        .channels-section {
+            background: rgba(30, 30, 45, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 6px;
+            padding: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            flex: 1;
+            min-height: 350px;
+            width: 100%;
+        }
+        
+        .channels-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+        
+        .channels-title {
+            font-size: 1.1rem;
+            color: #ffd166;
+        }
+        
+        .channels-count {
+            background: rgba(50, 50, 65, 0.9);
+            padding: 3px 8px;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            color: #d0d0d0;
+        }
+        
+        .channels-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 6px;
+            width: 100%;
+        }
+        
+        .channel-btn {
+            background: rgba(35, 35, 50, 0.9);
+            border-radius: 6px;
+            padding: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            height: 70px;
+        }
+        
+        .channel-btn:hover {
+            background: rgba(45, 45, 60, 1);
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+        
+        .channel-btn.active {
+            border-color: #d4b15c;
+            background: rgba(212, 177, 92, 0.15);
+        }
+        
+        .channel-icon {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: #d4b15c;
+        }
+        
+        .channel-name {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #f5f5f5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 14px;
+            background: rgba(40, 40, 55, 0.95);
+            color: #f0f0f0;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            border-left: 3px solid #d4b15c;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            max-width: 80%;
+        }
 
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-left-color: #2a8c85; }
+        .toast.error { border-left-color: #c55c5c; }
+        
+        /* Ottimizzazioni per mobile */
+        @media (max-width: 768px) {
+            body {
+                padding: 4px;
+            }
+            
+            .container {
+                gap: 4px;
+                width: 100%;
+            }
+            
+            .channels-container {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            
+            .channel-btn {
+                height: 60px;
+                padding: 8px;
+            }
+            
+            .channel-name {
+                font-size: 0.7rem;
+            }
+            
+            /* Schermo intero mobile */
+            .plyr--fullscreen-active {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                z-index: 10000;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .container { 
+                max-width: 100%;
+                padding: 0 2px;
+            }
+            .channels-container { 
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+                gap: 8px;
+            }
+            .channel-btn {
+                min-height: 80px;
+                padding: 12px;
+            }
+            .channel-name {
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .container {
+                max-width: 98%;
+            }
+            .channels-container {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="player-section">
+            <div class="player-header">
+                <div class="player-title">
+                    <i class="fas fa-tv"></i> GTV Mobile
+                </div>
+                <div class="current-channel-title" id="currentChannelTitle"></div>
+            </div>
+            <div class="video-container">
+                <video id="videoPlayer" playsinline controls>
+                    <!-- Le sorgenti verranno impostate dinamicamente -->
+                </video>
+            </div>
+        </div>
+        
+        <div class="channels-section">
+            <div class="channels-header">
+                <div class="channels-title"><i class="fas fa-list"></i> Canali TV</div>
+                <div class="channels-count" id="channelsCount">0</div>
+            </div>
+            
+            <div class="channels-container" id="channelsContainer">
+                <!-- I canali verranno aggiunti dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <!-- Plyr JS -->
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script>
+        // Lista dei canali
+        const channels = [
+            { url: "https://dash2.antik.sk/live/test_rai_uno_tizen/playlist.m3u8", name: "Rai 1" },
+            { url: "https://viamotionhsi.netplus.ch/live/eds/rai2/browser-HLS8/rai2.m3u8", name: "Rai 2 HD" },
+            { url: "https://dash2.antik.sk/live/test_rai_tre_tizen/playlist.m3u8", name: "Rai 3" },
+            { url: "https://viamotionhsi.netplus.ch/live/eds/rete4/browser-HLS8/rete4.m3u8", name: "Rete 4" },
+            { url: "https://viamotionhsi.netplus.ch/live/eds/canale5/browser-HLS8/canale5.m3u8", name: "Canale 5" },
+            { url: "https://viamotionhsi.netplus.ch/live/eds/italia1/browser-HLS8/italia1.m3u8", name: "Italia 1" },
+            { url: "https://viamotionhsi.netplus.ch/live/eds/la7/browser-HLS8/la7.m3u8", name: "LA7 HD" },
+            { url: "https://viamotionhsi.netplus.ch/live/eds/rainews/browser-HLS8/rainews.m3u8", name: "Rai News 24" },
+            { url: "https://viamotionhsi.netplus.ch/live/eds/raistoria/browser-HLS8/raistoria.m3u8", name: "Rai Storia" },
+            { url: "https://d24aqelmrau4kx.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-l1oas691aj7p2/WBTV_IT.m3u8", name: "Discovery" },
+            { url: "https://stream.mediawork.cz/retrotv/smil:retrotv2.smil/playlist.m3u8", name: "Retro Music" },
+            { url: "https://30a-tv.com/feeds/ceftech/30atvmusic.m3u8", name: "30A Music" },
+            { url: "https://d2lyea6if8kkz9.cloudfront.net/playlist/amg00056-vevotv-vevoretrorockau-samsungau/playlist.m3u8", name: "VEVO Rock" },
+            { url: "https://5f22d76e220e1.streamlock.net/iuniortv/iuniortv/playlist.m3u8", name: "Junior TV" },
+            { url: "https://cineverse.g-mana.live/media/ac7cff3c-5bc3-4745-ac4d-56aadb586d00/profile/1/profileManifest.m3u8", name: "RetroCrush" },
+            { url: "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8", name: "Red Bull TV" },
+            { url: "https://sdn-global-live-streaming-packager-cache.3qsdn.com/13456/13456_264_live.m3u8", name: "Deluxe Music" },
+            { url: "https://mechtvltd-mechplus-1-dk.samsung.wurl.tv/playlist.m3u8", name: "Mechplus" },
+            { url: "https://the-pet-collective-international-it.samsung.wurl.tv/playlist.m3u8", name: "Pet TV" },
+            { url: "https://amg01796-amg01796c3-rakuten-uk-2555.playouts.now.amagi.tv/playlist/amg01796-fastmediafast-wasabii-rakutenuk/playlist.m3u8", name: "Wasabi Anime" },
+            { url: "https://c.mjh.nz/abc-qld.m3u8", name: "ABC TV QLD" },
+            { url: "https://bamusa-naturetime-emea-fra-rakuten.amagi.tv/playlist.m3u8", name: "Nature Time" },
+            { url: "https://live-hls-web-aje.getaj.net/AJE/01.m3u8", name: "Al Jazeera" },
+            { url: "https://lotus.stingray.com/manifest/ose-102ads-montreal/samsungtvplus/master.m3u8", name: "Rock Alternative" },
+            { url: "https://e3.thetvapp.to/hls/DisneyChannelEast/index.m3u8", name: "Disney Channel" },
+            { url: "https://1d1b0d4cb6ae4c31985d13221795695b.mediatailor.eu-west-1.amazonaws.com/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6057/master.m3u8", name: "Rakuten Movies" },
+            { url: "https://asian-cinema-rakuten-tv-it.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6431/master.m3u8", name: "Asian Cinema" },
+            { url: "https://cbsn-det.cbsnstream.cbsnews.com/out/v1/169f5c001bc74fa7a179b19c20fea069/master.m3u8", name: "CBS News Detroit" },
+            { url: "https://livetv-fa.tubi.video/wxyz2/playlist.m3u8", name: "ABC 7 Detroit" },
+            { url: "https://fl1.moveonjoy.com/VH1/index.m3u8", name: "VH1 East" },
+            { url: "https://fl1.moveonjoy.com/FOX_Sports_1/index.m3u8", name: "Fox Sports 1" },
+            { url: "https://tvpass.org/live/FoxSports2/sd", name: "Fox Sports 2" },
+            { url: "https://cbsn-la.cbsnstream.cbsnews.com/out/v1/57b6c4534a164accb6b1872b501e0028/master.m3u8", name: "CBS News LA" },
+            { url: "https://viamotionhsi.netplus.ch/live/eds/raisport1/browser-HLS8/raisport1.m3u8", name: "Rai Sport HD" },
+            { url: "https://digicom.hls.iptvdc.com/canalmotor/index.m3u8", name: "Canal Motor" },
+            { url: "https://25dee28f.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X01vdG9yc3BvcnR0di0xX0hMUw/playlist.m3u8", name: "Motorsport.tv" },
+            { url: "https://stream.ads.ottera.tv/playlist.m3u8?network_id=535", name: "Motorvision TV" },
+            { url: "https://webstream.multistream.it/memfs/e2cb3629-c1a2-495b-b43a-9eb386f04ed8.m3u8", name: "ACI Sport TV" },
+            { url: "https://viamotionhsi.netplus.ch/live/eds/la7d/browser-HLS8/la7d.m3u8", name: "La7 Cinema" },
+            { url: "https://a-cdn.klowdtv.com/live3/euronews_720p/playlist.m3u8", name: "Euronews" },
+            { url: "https://d1ujfw1zyymzyd.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-a6fukwkbxmex8/live/fast-channel-animevision-64527ec0/fast-channel-animevision-64527ec0.m3u8", name: "Anime Vision" },
+            { url: "https://d82pyvmcw2kdc.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-swfivzrzwamaq/live/fast-channel-animevisionclassics-efc8dc6d/fast-channel-animevisionclassics-efc8dc6d.m3u8", name: "Anime Classics" },
+            { url: "https://lfmhd.vedge.infomaniak.com/livecast/lfmhd/playlist.m3u8", name: "Carac 3" },
+            { url: "https://5929b138b139d.streamlock.net/RadioIbizaTV/livestream/playlist.m3u8", name: "Radio Ibiza TV" },
+            { url: "https://streams2.sofast.tv/sofastplayout/0c3229e2-6ca5-4714-859e-c0ac6b9aa58a_0_HLS/master.m3u8", name: "Automotion" },
+            { url: "https://aenetworks-worldwartv-rakuten.amagi.tv/playlist.m3u8", name: "World War TV" },
+            { url: "https://linear-599.frequency.stream/dist/stirr/599/hls/master/playlist.m3u8", name: "Speed Sport 1" },
+            { url: "https://amg01370-italiansportcom-sportitalia-rakuten-3hmdb.amagi.tv/hls/amagi_hls_data_rakutenAA-sportitalia-rakuten/CDN/master.m3u8", name: "Sport Italia" },
+            { url: "https://amg01576-blueskyeenterta-lovepetsemea-samsungse-ctamh.amagi.tv/playlist/amg01576-blueskyeenterta-lovepetsemea-samsungse/playlist.m3u8", name: "Pets" },
+            { url: "https://muzzik-live.morescreens.com/mts-8/playlist.m3u8", name: "Muzzik FLASHBACK" },
+            { url: "https://muzzik-live.morescreens.com/mts-1/playlist.m3u8", name: "Muzzik Rock&Roll" },
+            { url: "https://streams2.sofast.tv/sofastplayout/b7867c83-0c17-4de2-a74b-beb972c4f342_1000015693_HLS/master.m3u8", name: "Mercury+" }
+        ];
+
+        // Elementi DOM
+        const channelsContainer = document.getElementById('channelsContainer');
+        const channelsCount = document.getElementById('channelsCount');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const currentChannelTitle = document.getElementById('currentChannelTitle');
+        const toastContainer = document.getElementById('toastContainer');
+        
+        // Variabili globali
+        let hls = null;
+        let player = null; // Per l'istanza Plyr
+        let controlsTimeout = null;
+        let isUserInteracting = false;
+
+        // Funzione per mostrare toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toastContainer.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Gestione controlli che scompaiono dopo 3 secondi
+        function hideControls() {
+            if (player && player.elements.controls && !isUserInteracting) {
+                player.elements.controls.classList.add('hidden');
+            }
+        }
+
+        function showControls() {
+            if (player && player.elements.controls) {
+                player.elements.controls.classList.remove('hidden');
+                resetControlsTimer();
+            }
+        }
+
+        function resetControlsTimer() {
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(hideControls, 3000);
+        }
+
+        function setupControlsAutoHide() {
+            if (!player || !player.elements.controls) return;
+            
+            // Mostra i controlli all'inizio
+            showControls();
+            
+            // Eventi per interazione utente
+            player.elements.controls.addEventListener('mousemove', showControls);
+            player.elements.controls.addEventListener('touchstart', function() {
+                isUserInteracting = true;
+                showControls();
+                setTimeout(() => { isUserInteracting = false; }, 3000);
+            });
+            player.elements.controls.addEventListener('click', showControls);
+            
+            // Eventi del player
+            player.on('play', showControls);
+            player.on('pause', showControls);
+            player.on('seeking', showControls);
+            player.on('seeked', showControls);
+            
+            // Gestione schermo intero
+            player.on('enterfullscreen', function() {
+                // Reset timer quando si entra in fullscreen
+                showControls();
+            });
+            
+            player.on('exitfullscreen', function() {
+                // Reset timer quando si esce dal fullscreen
+                showControls();
+            });
+        }
+
+        // Inizializzazione Plyr
+        function initializePlyr() {
+            player = new Plyr('#videoPlayer', {
+                controls: [
+                    'play-large', // Il pulsante play grande al centro
+                    'play', // Play/pause
+                    'progress', // Barra progresso
+                    'current-time', // Tempo corrente
+                    'duration', // Durata
+                    'mute', // Muto
+                    'volume', // Volume verticale
+                    'settings', // Impostazioni
+                    'pip', // Picture-in-picture
+                    'fullscreen', // Schermo intero
+                ],
+                hideControls: false, // Disabilitiamo il nascondimento automatico di Plyr
+                settings: ['quality', 'speed'],
+                storage: { enabled: false },
+                fullscreen: { 
+                    enabled: true, 
+                    fallback: true, 
+                    iosNative: true 
+                }
+            });
+
+            // Aggiungi un controllo personalizzato per stop
+            const stopButton = document.createElement('button');
+            stopButton.type = 'button';
+            stopButton.className = 'plyr__controls__item plyr__control';
+            stopButton.innerHTML = '<i class="fas fa-stop"></i>';
+            stopButton.setAttribute('aria-label', 'Stop');
+            stopButton.setAttribute('data-plyr', 'stop');
+
+            stopButton.addEventListener('click', function() {
+                player.pause();
+                player.currentTime = 0;
+                showToast('Riproduzione fermata', 'info');
+            });
+
+            // Aggiungere il bottone ai controlli
+            const controls = player.elements.controls;
+            if (controls) {
+                // Inseriamo il bottone dopo il bottone play
+                const playButton = controls.querySelector('.plyr__control--play');
+                if (playButton) {
+                    playButton.parentNode.insertBefore(stopButton, playButton.nextSibling);
+                }
+            }
+
+            // Gestione PIP personalizzata per garantire il funzionamento
+            if (document.pictureInPictureEnabled) {
+                // Aggiungi gestore per il click sul bottone PIP
+                player.on('pip', function() {
+                    togglePictureInPicture();
+                });
+                
+                // Gestisci quando la PIP viene chiusa dal browser
+                videoPlayer.addEventListener('leavepictureinpicture', function() {
+                    player.elements.container.classList.remove('plyr--pip');
+                });
+            } else {
+                // Nascondi il bottone PIP se non supportato
+                const pipButton = player.elements.controls.querySelector('[data-plyr="pip"]');
+                if (pipButton) {
+                    pipButton.style.display = 'none';
+                }
+            }
+
+            // Setup per nascondere i controlli dopo 3 secondi
+            setupControlsAutoHide();
+        }
+
+        // Funzione per attivare/disattivare Picture-in-Picture
+        function togglePictureInPicture() {
+            if (!document.pictureInPictureEnabled) {
+                showToast('Picture-in-Picture non supportato dal tuo browser', 'error');
+                return;
+            }
+            
+            try {
+                if (document.pictureInPictureElement) {
+                    document.exitPictureInPicture()
+                        .then(() => {
+                            player.elements.container.classList.remove('plyr--pip');
+                            showToast('Picture-in-Picture disattivato', 'info');
+                        })
+                        .catch(error => {
+                            console.error('Errore nell\'uscire dalla PIP:', error);
+                            showToast('Errore PIP', 'error');
+                        });
+                } else {
+                    videoPlayer.requestPictureInPicture()
+                        .then(() => {
+                            player.elements.container.classList.add('plyr--pip');
+                            showToast('Picture-in-Picture attivato', 'success');
+                        })
+                        .catch(error => {
+                            console.error('Errore nell\'attivare la PIP:', error);
+                            showToast('Errore PIP', 'error');
+                        });
+                }
+            } catch (error) {
+                console.error('Errore PIP:', error);
+                showToast('Errore PIP', 'error');
+            }
+        }
+
+        // Riproduci stream
+        function playStream(url, title, id) {
+            document.querySelectorAll('.channel-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const currentBtn = document.querySelector(`.channel-btn[data-id="${id}"]`);
+            if (currentBtn) {
+                currentBtn.classList.add('active');
+            }
+            
+            currentChannelTitle.textContent = title;
+            
+            // Se c'è un'istanza HLS esistente, distruggila
+            if (hls) {
+                hls.destroy();
+            }
+            
+            // Imposta la sorgente del video
+            videoPlayer.src = url;
+            
+            // Se è un stream HLS, usa HLS.js
+            if (url.includes('.m3u8')) {
+                if (Hls.isSupported()) {
+                    hls = new Hls();
+                    hls.loadSource(url);
+                    hls.attachMedia(videoPlayer);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        videoPlayer.play();
+                        showControls(); // Mostra i controlli quando il video inizia
+                    });
+                } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                    // Supporto nativo per HLS (Safari)
+                    videoPlayer.play();
+                    showControls(); // Mostra i controlli quando il video inizia
+                } else {
+                    showToast('Il browser non supporta la riproduzione di questo formato', 'error');
+                }
+            } else {
+                // Formati direttamente supportati (mp4, webm, etc.)
+                videoPlayer.play();
+                showControls(); // Mostra i controlli quando il video inizia
+            }
+            
+            // Riproduci il video con Plyr
+            player.play();
+            
+            showToast(`Riproducendo: ${title}`, 'success');
+        }
+
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePlyr();
+            displayChannels();
+        });
+        
+        // Mostra i canali come pulsanti
+        function displayChannels() {
+            channelsContainer.innerHTML = '';
+            channelsCount.textContent = `${channels.length} canali`;
+            
+            channels.forEach((channel, index) => {
+                const channelBtn = document.createElement('div');
+                channelBtn.className = 'channel-btn';
+                channelBtn.dataset.id = `channel-${index}`;
+                
+                channelBtn.innerHTML = `
+                    <i class="fas fa-tv channel-icon"></i>
+                    <div class="channel-name">${channel.name}</div>
+                `;
+                
+                channelBtn.addEventListener('click', () => {
+                    playStream(channel.url, channel.name, `channel-${index}`);
+                });
+                
+                channelsContainer.appendChild(channelBtn);
+            });
+        }
+    </script>
+</body>
+</html>
