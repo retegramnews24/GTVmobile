@@ -58,7 +58,13 @@
             color: #ffd166;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+        }
+        
+        .logo {
+            height: 24px;
+            width: auto;
+            object-fit: contain;
         }
         
         .current-channel-title {
@@ -268,6 +274,15 @@
                 font-size: 0.65rem;
             }
             
+            .logo {
+                height: 20px;
+            }
+            
+            .player-title {
+                font-size: 1rem;
+                gap: 4px;
+            }
+            
             .plyr--fullscreen-active {
                 position: fixed !important;
                 top: 0 !important;
@@ -311,7 +326,8 @@
         <div class="player-section">
             <div class="player-header">
                 <div class="player-title">
-                    <i class="fas fa-tv"></i> GTV Mobile
+                    <img src="https://raw.githubusercontent.com/retegramnews24/GTVmobile/main/Logo_GTVvv.png" alt="GTV Logo" class="logo">
+                    Mobile
                 </div>
                 <div class="current-channel-title" id="currentChannelTitle">Seleziona un canale</div>
             </div>
